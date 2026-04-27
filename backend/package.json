@@ -1,0 +1,19 @@
+{
+  "name": "equa-backend",
+  "version": "1.0.0",
+  "description": "EQUA Express Backend for Cloud Run",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.6.0",
+    "@google/generative-ai": "^0.24.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "firebase-admin": "^12.0.0"
+  }
+}

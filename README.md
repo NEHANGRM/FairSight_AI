@@ -4,10 +4,11 @@
   <p><i>Built for the Google Solution Challenge 2026</i></p>
 
   [![React](https://img.shields.io/badge/React-19-blue.svg)](https://react.dev/)
-  [![Vite](https://img.shields.io/badge/Vite-5-646CFF.svg)](https://vitejs.dev/)
-  [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38B2AC.svg)](https://tailwindcss.com/)
-  [![Gemini API](https://img.shields.io/badge/Google-Gemini_2.0_Flash_Lite-orange.svg)](https://ai.google.dev/)
-  [![Firebase](https://img.shields.io/badge/Firebase-Hosting-yellow.svg)](https://firebase.google.com/)
+  [![Express](https://img.shields.io/badge/Express-4.21-lightgrey.svg)](https://expressjs.com/)
+  [![Gemini API](https://img.shields.io/badge/Google-Gemini_2.5_Flash_Lite-orange.svg)](https://ai.google.dev/)
+  [![Cloud Run](https://img.shields.io/badge/Google_Cloud-Run-blue.svg)](https://cloud.google.com/run)
+  [![Firebase](https://img.shields.io/badge/Firebase-RTDB_&_Admin-yellow.svg)](https://firebase.google.com/)
+  [![Docker](https://img.shields.io/badge/Docker-Enabled-blue.svg)](https://www.docker.com/)
 </div>
 
 ---
@@ -21,7 +22,7 @@ Because these models act as "black boxes," it is nearly impossible for organizat
 **EQUA is an Ethical Infrastructure proxy firewall.** 
 It sits as a lightning-fast middleware layer between the client application and the target AI Model (e.g., Vertex AI endpoints). Before any AI decision is returned to the user, EQUA mathematically audits it in real-time.
 
-Using **Counterfactual Identity Simulation**, EQUA instantly clones the user's profile, swaps their protected attributes (e.g., changing male to female), and re-queries the model. If the AI changes its decision solely based on that demographic swap, EQUA **blocks** the transaction, logs a cryptographic Fairness Certificate, and generates a real-time compliance audit using **Google Gemini 2.0 Flash Lite**.
+Using **Counterfactual Identity Simulation**, EQUA instantly clones the user's profile, swaps their protected attributes (e.g., changing male to female), and re-queries the model. If the AI changes its decision solely based on that demographic swap, EQUA **blocks** the transaction, logs a real-time Fairness Certificate to **Firebase RTDB**, and generates a compliance audit using **Google Gemini 2.5 Flash Lite**.
 
 ---
 
@@ -29,9 +30,11 @@ Using **Counterfactual Identity Simulation**, EQUA instantly clones the user's p
 
 EQUA heavily leverages Google Cloud and AI to deliver a production-grade firewall:
 
-- **Google Gemini API (`gemini-2.0-flash-lite`):** Acts as the real-time AI Fairness Auditor. When a decision is blocked, EQUA dynamically constructs prompts containing mathematical disparity deltas and streams back human-readable compliance narratives and actionable ML remediation steps using the `@google/generative-ai` SDK.
-- **Firebase Hosting:** The entire frontend is deployed via Firebase Hosting, ensuring global low-latency access and instant asset delivery.
-- **Vertex AI & Cloud KMS (Simulated):** EQUA visualizes integration with Vertex AI pipelines for automated model retraining, and simulates Google Cloud KMS cryptographic hashing for non-repudiable audit logs.
+- **Google Gemini API (`gemini-2.5-flash-lite`):** Acts as the real-time AI Fairness Auditor. Our Express backend securely orchestrates inference, constructing prompts with mathematical disparity deltas to generate human-readable compliance narratives.
+- **Google Cloud Run:** Hosts our containerized Express.js backend, providing auto-scaling, high availability, and a secure environment for our API keys.
+- **Firebase Realtime Database & Admin SDK:** Provides the persistence layer for the Fairness Registry. All blocked decisions are securely logged server-side via the Admin SDK for non-repudiable auditing.
+- **Google Cloud Build:** Automates our CI/CD pipeline, ensuring that every push to the repository is tested, containerized, and deployed to Cloud Run.
+- **Firebase Hosting:** Serves the optimized React frontend with global low-latency.
 
 *(See our [GOOGLE_SERVICES.md](./GOOGLE_SERVICES.md) for full technical details).*
 
@@ -39,15 +42,15 @@ EQUA heavily leverages Google Cloud and AI to deliver a production-grade firewal
 
 ## 🏗️ System Architecture & Data Flow
 
-EQUA's architecture relies on a strict zero-trust approach to algorithmic inference.
+EQUA's architecture relies on a strict zero-trust approach to algorithmic inference, now fortified with a secure backend proxy.
 
 ```mermaid
 sequenceDiagram
-    participant Client as Client Application
-    participant Proxy as EQUA Firewall Proxy
+    participant Client as React Frontend
+    participant Proxy as EQUA Express Proxy (Cloud Run)
     participant AI as Vertex AI Endpoint
-    participant Gemini as Gemini 2.0 API
-    participant Registry as Fairness Registry (KMS)
+    participant Gemini as Gemini 2.5 API
+    participant RTDB as Firebase Realtime DB
 
     Client->>Proxy: 1. Request AI Inference (User Data)
     Proxy->>AI: 2. Forward Initial Request
@@ -67,7 +70,7 @@ sequenceDiagram
     alt Disparity Δ > Policy Threshold (e.g. ±10%)
         Proxy->>Gemini: 8. Send Delta & Features for Audit
         Gemini-->>Proxy: 9. Return Compliance Narrative & ML Fix
-        Proxy->>Registry: 10. Log Decision & Generate Cryptographic Hash
+        Proxy->>RTDB: 10. Log Decision (Admin SDK)
         Proxy-->>Client: 11. BLOCK Transaction (Return Audit Report)
     else Disparity Δ ≤ Policy Threshold
         Proxy-->>Client: 8. ALLOW Transaction (Return Initial Decision)
@@ -82,8 +85,8 @@ sequenceDiagram
 
 - **⚡ Real-Time Counterfactual Simulator**
   Instantly swap protected demographic attributes (Gender, Race, Age) and watch the simulated model's decision shift. 
-- **📜 Fairness Certificates (EU AI Act Ready)**
-  Blocked decisions are permanently logged into a cryptographic registry, simulating Google Cloud KMS signatures for non-repudiation.
+- **📜 Fairness Certificates (Firebase Integrated)**
+  Blocked decisions are permanently logged into a real-time registry on Firebase, providing a production-grade audit trail.
 - **📊 Custom Bias Heatmap & Dashboard**
   Built with zero external charting libraries. All visualizations are high-performance raw SVGs with CSS keyframe micro-animations to ensure zero-latency rendering.
 - **🔄 Automated Retraining Loop**
@@ -102,11 +105,12 @@ EQUA was built specifically to address:
 
 ## 🛠️ Installation & Setup
 
-Want to run the EQUA dashboard locally? 
+EQUA now uses a full-stack architecture for enhanced security.
 
 ### Prerequisites
-- Node.js (v18+)
-- Google AI Studio API Key (for Gemini)
+- Node.js (v20+)
+- Docker (optional, for local container testing)
+- Firebase Project & Gemini API Key
 
 ### Getting Started
 
@@ -116,25 +120,36 @@ Want to run the EQUA dashboard locally?
    cd FairSight_AI/equa
    ```
 
-2. **Install dependencies:**
+2. **Backend Setup:**
    ```bash
+   cd backend
    npm install
    ```
-
-3. **Configure your API Key:**
-   Open `src/screens/CounterfactualSimulator.jsx` and ensure your Gemini API key is active. *(Note: We have implemented an automatic fallback to simulated text if you exceed your free-tier Google Cloud quota!)*
-
-4. **Start the development server:**
+   Create a `.env` file in the `backend` folder and add your credentials:
+   ```env
+   GEMINI_API_KEY=your_key
+   FIREBASE_SERVICE_ACCOUNT_KEY='{"type": "service_account", ...}'
+   FIREBASE_DATABASE_URL=https://your-project.firebaseio.com
+   ```
+   Start the backend:
    ```bash
+   npm start
+   ```
+
+3. **Frontend Setup:**
+   Open a new terminal in the root `equa` directory:
+   ```bash
+   npm install
    npm run dev
    ```
-5. Open your browser and navigate to `http://localhost:5173`.
+
+4. Open your browser and navigate to `http://localhost:5173`.
 
 ---
 
 ## 🏆 Hackathon Challenges
 
-Building a production-grade AI Bias Firewall required overcoming massive UI latency bottlenecks and managing strict Gemini API Quota limits during development. We engineered resilient fallback architectures and pure-SVG visualizations to ensure a flawless demo.
+Building a production-grade AI Bias Firewall required overcoming massive UI latency bottlenecks and managing strict Gemini API Quota limits. Our biggest milestone was re-architecting the system to a secure backend proxy to protect AI credentials while maintaining sub-second audit latency.
 
 *(Read our full technical post-mortem in [CHALLENGES.md](./CHALLENGES.md)).*
 
@@ -142,3 +157,4 @@ Building a production-grade AI Bias Firewall required overcoming massive UI late
 <div align="center">
   <p><i>Building a fairer future, one inference at a time.</i></p>
 </div>
+

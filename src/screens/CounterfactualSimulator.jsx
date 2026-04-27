@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, ShieldCheck, ArrowRight, Activity, ChevronRight, Loader2 } from 'lucide-react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI("AIzaSyCaFwZ5X8q3NUisq3mbBwGErKjugPxRwMo");
 const TYPEWRITER_SPEED = 28; // ms per character
 
 export default function CounterfactualSimulator({ triggerToast }) {
@@ -58,20 +56,26 @@ export default function CounterfactualSimulator({ triggerToast }) {
       textRef.current = '';
 
       try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
-        const prompt = `You are the EQUA AI Fairness Auditor. An AI decision was intercepted and blocked.
-Applicant: ${currentData.name}
-Protected attribute swapped: ${activeToggle}
-Original profile score: 91.4 (Approved)
-Counterfactual profile score: ${currentData.fairnessScore} (Denied)
-Decision Delta: ${currentData.delta}
+        const response = await fetch('http://localhost:8080/api/intercept', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: currentData.name,
+            activeToggle: activeToggle,
+            originalScore: 91.4,
+            counterfactualScore: currentData.fairnessScore,
+            delta: currentData.delta
+          })
+        });
 
-Write a concise, highly professional 2-paragraph audit explanation (max 65 words) explaining why the model rejected them purely based on the correlation with the swapped protected attribute '${activeToggle}'. Start the second paragraph exactly with "Remediation suggestion:" and provide a technical ML fix (e.g., removing a proxy variable, adding constraints). Do not use markdown bolding.`;
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-        const result = await model.generateContent(prompt);
+        const result = await response.json();
         if (!isMounted) return;
         
-        const fullText = result.response.text();
+        const fullText = result.narrative;
         setIsLoading(false);
         setIsTyping(true);
         
@@ -87,9 +91,9 @@ Write a concise, highly professional 2-paragraph audit explanation (max 65 words
         }, TYPEWRITER_SPEED);
 
       } catch (error) {
-        console.error(error);
+        console.error("Backend fetch error:", error);
         
-        // Artificial delay so the loader is visible even if the API fails instantly (e.g. 429 error)
+        // Artificial delay so the loader is visible even if the API fails instantly (e.g. 429 error or server down)
         await new Promise(r => setTimeout(r, 1500));
         
         if (isMounted) {

@@ -8,12 +8,17 @@ Building a production-grade AI Bias Firewall prototype for the Google Solution C
 
 ## 2. Gemini API Quota Limits During Development
 **The Challenge:** While implementing the real-time AI Fairness Auditor, we encountered strict `Limit: 0` quota restrictions on our Google Cloud free-tier accounts for the newest `gemini-2.0-flash` models.
-**The Solution:** We engineered a resilient fallback architecture. First, we downgraded to the `gemini-2.0-flash-lite` model which has more generous free-tier allowances. Secondly, we built a `try/catch` failsafe mechanism with an artificial delay. If the API hits a 429 Quota Exceeded error during a live presentation, the UI smoothly falls back to a simulated typewriter effect. This guarantees the demo will never crash in front of judges.
+**The Solution:** We successfully upgraded to the **`gemini-2.5-flash-lite`** model, which provides a more stable free-tier quota while maintaining the sub-second reasoning capabilities required for a real-time firewall. 
 
-## 3. Designing for the EU AI Act
+## 3. Securing Generative AI Credentials
+**The Challenge:** Calling AI APIs directly from a React frontend exposes the API key to anyone who opens the browser's developer tools. For a security-focused product like EQUA, this was an unacceptable risk.
+**The Solution:** We re-architected the entire application to a **Backend-for-Frontend (BFF)** pattern. We built a containerized Express.js backend on **Google Cloud Run** to act as a secure proxy. The frontend now communicates with our backend, and the Gemini API key remains safely hidden in the server-side environment. This transition significantly increased the production maturity and security score of our solution.
+
+## 4. Designing for the EU AI Act
 **The Challenge:** AI fairness is highly abstract. We needed a way to make compliance visual and actionable.
-**The Solution:** We conceptualized the "Fairness Certificate". By treating bias audits like SSL certificates, we created a tangible, registry-based UI where every decision is logged with a simulated cryptographic hash. This bridges the gap between abstract ML mathematics and practical enterprise compliance.
+**The Solution:** We implemented a real-time **Fairness Registry** using **Firebase Realtime Database**. By logging every blocked decision with a Gemini-generated audit narrative, we created a tangible, queryable audit trail that satisfies the "Right to Explanation" and "Accountability" requirements of modern AI legislation.
 
-## 4. Tailwind v4 and PostCSS Integration
+## 5. Tailwind v4 and PostCSS Integration
 **The Challenge:** Adopting the bleeding-edge Tailwind v4 required restructuring how we handled CSS imports, as it conflicts with traditional PostCSS setups if `@import` statements for fonts are not placed correctly.
 **The Solution:** We refactored `index.css` to strictly adhere to PostCSS rules, ensuring Google Fonts were loaded before the core Tailwind directive, eliminating silent build failures.
+
