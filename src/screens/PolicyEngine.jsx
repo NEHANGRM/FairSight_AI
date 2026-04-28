@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, Save, RotateCcw } from 'lucide-react';
 
-export default function PolicyEngine() {
+export default function PolicyEngine({ addNotification }) {
   const [demoParity, setDemoParity] = useState(10);
   const [eqOp, setEqOp] = useState(12);
   const [cfFair, setCfFair] = useState(10);
@@ -112,10 +112,29 @@ export default function PolicyEngine() {
           </div>
 
           <div className="flex gap-3 justify-end mt-2">
-            <button className="flex items-center gap-2 px-4 py-2 font-sans text-[13px] text-eq-block border border-transparent hover:border-eq-border hover:bg-eq-surface rounded transition-colors">
+            <button
+              onClick={() => {
+                setDemoParity(10); setEqOp(12); setCfFair(10); setFlagSens(65); setAutoBlock(40);
+                addNotification({
+                  type: 'info',
+                  title: 'Policy Engine Reset',
+                  body: 'All fairness thresholds reset to factory defaults by Rahul Anand.',
+                });
+              }}
+              className="flex items-center gap-2 px-4 py-2 font-sans text-[13px] text-eq-block border border-transparent hover:border-eq-border hover:bg-eq-surface rounded transition-colors"
+            >
               <RotateCcw className="w-4 h-4" /> Reset to Defaults
             </button>
-            <button className="flex items-center gap-2 px-5 py-2 font-sans text-[13px] font-medium text-white bg-eq-blue hover:bg-blue-500 rounded shadow-lg transition-colors">
+            <button
+              onClick={() => {
+                addNotification({
+                  type: 'success',
+                  title: 'Policy Engine Updated',
+                  body: `Thresholds saved: Dem. Parity ${demoParity}%, Equal Opp. ${eqOp}%, CF Fairness ${cfFair}pts, Flag ${flagSens}, Block ${autoBlock}. Changes are live.`,
+                });
+              }}
+              className="flex items-center gap-2 px-5 py-2 font-sans text-[13px] font-medium text-white bg-eq-blue hover:bg-blue-500 rounded shadow-lg transition-colors"
+            >
               <Save className="w-4 h-4" /> Save Policy Changes
             </button>
           </div>

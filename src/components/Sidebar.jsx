@@ -66,14 +66,18 @@ export default function Sidebar({ activeScreen, setActiveScreen }) {
           <li className="my-4 mx-5 border-t border-eq-border"></li>
 
           {secondaryNavItems.map((item) => {
+            const isActive = activeScreen === item.name;
             const Icon = item.icon;
             return (
               <li key={item.name}>
                 <button
-                  className="w-full flex items-center gap-3 px-5 py-2.5 text-sm font-sans text-eq-muted hover:text-eq-text relative ease-out-strict transition-colors duration-150 group"
+                  onClick={() => setActiveScreen(item.name)}
+                  className={`w-full flex items-center gap-3 px-5 py-2.5 text-sm font-sans relative ease-out-strict transition-colors duration-150 group
+                    ${isActive ? 'bg-eq-blue-dim/10 text-eq-text' : 'text-eq-muted hover:text-eq-text'}`}
                 >
-                  <div className="absolute inset-0 bg-eq-surface opacity-0 group-hover:opacity-100 transition-opacity duration-150 ease-out -z-10" />
-                  <Icon className="w-4 h-4 text-eq-muted group-hover:text-eq-text" />
+                  {isActive && <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-eq-blue" />}
+                  {!isActive && <div className="absolute inset-0 bg-eq-surface opacity-0 group-hover:opacity-100 transition-opacity duration-150 ease-out -z-10" />}
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-eq-blue' : 'text-eq-muted group-hover:text-eq-text'}`} />
                   {item.name}
                 </button>
               </li>

@@ -3,12 +3,45 @@ import { Sparkles, ShieldCheck, ArrowRight, Activity, ChevronRight, Loader2 } fr
 
 const TYPEWRITER_SPEED = 28; // ms per character
 
-export default function CounterfactualSimulator({ triggerToast }) {
+export default function CounterfactualSimulator({ triggerToast, addNotification, selectedDecision, setSelectedDecision, setActiveScreen }) {
   const [activeToggle, setActiveToggle] = useState('Race');
   const [typedText, setTypedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const textRef = useRef('');
+
+  // Build original profile from selectedDecision or defaults
+  const originalProfile = selectedDecision ? {
+    name: selectedDecision.name,
+    id: selectedDecision.id,
+    type: selectedDecision.type,
+    model: selectedDecision.model,
+    score: selectedDecision.score,
+    status: selectedDecision.status,
+    time: selectedDecision.time,
+    age: selectedDecision.age || 34,
+    gender: selectedDecision.gender || 'Male',
+    creditScore: selectedDecision.creditScore || 720,
+    income: selectedDecision.income || 85000,
+    zip: selectedDecision.zip || '10001',
+    debtRatio: selectedDecision.debtRatio || 28,
+    employment: selectedDecision.employment || 6,
+  } : {
+    name: 'James Smith',
+    id: '#EQ-2026-04192',
+    type: 'Loan',
+    model: 'LendAI-v2.3.1',
+    score: 91.4,
+    status: 'PASS',
+    time: 247,
+    age: 34,
+    gender: 'Male',
+    creditScore: 720,
+    income: 85000,
+    zip: '10001',
+    debtRatio: 28,
+    employment: 6,
+  };
 
   // Values based on active toggle
   const getDemoData = () => {
@@ -77,6 +110,13 @@ export default function CounterfactualSimulator({ triggerToast }) {
 
         const result = await response.json();
         if (!isMounted) return;
+
+        // Push REAL notification — decision blocked via Gemini
+        addNotification({
+          type: 'blocked',
+          title: `Decision Blocked — ${currentData.name}`,
+          body: `${activeToggle} swap caused a ${currentData.delta}% score delta. Gemini audit narrative logged to Firebase RTDB.`,
+        });
         
         const fullText = result.narrative;
         setIsLoading(false);
@@ -98,6 +138,13 @@ export default function CounterfactualSimulator({ triggerToast }) {
       } catch (error) {
         if (error.name === 'AbortError') return; // Ignore aborted requests
         console.error("Backend fetch error:", error);
+
+        // Push REAL notification — API failure
+        addNotification({
+          type: 'warning',
+          title: 'Gemini API Call Failed',
+          body: `Backend returned error for ${currentData.name}. Using fallback narrative. Error: ${error.message}`,
+        });
         
         await new Promise(r => setTimeout(r, 1500));
         
@@ -133,6 +180,11 @@ export default function CounterfactualSimulator({ triggerToast }) {
   const handleDemoRun = () => {
     setActiveToggle('Race');
     triggerToast('Loan #EQ-2026-04192 blocked — bias score 61.8. FCM push sent to Rahul Anand.');
+    addNotification({
+      type: 'blocked',
+      title: 'Decision Blocked — Loan #EQ-2026-04192',
+      body: `Compliance officer alert: Bias score 61.8 for ${currentData.name}. FCM push sent to Rahul Anand.`,
+    });
   };
 
   return (
@@ -162,7 +214,7 @@ export default function CounterfactualSimulator({ triggerToast }) {
         {/* Intercept Banner */}
         <div className="mx-6 mb-6 bg-eq-flag-dim border border-eq-flag/40 rounded px-4 py-2 flex items-center gap-2">
           <span className="font-plex text-eq-flag text-xs leading-relaxed">
-            ⚡ Decision Intercepted — ID #EQ-2026-04192 — Held pending fairness review — 247ms intercept latency — Source: LoanApprovalModel v2.3.1 — Endpoint: api.equa.ai/intercept
+            ⚡ Decision Intercepted — ID {originalProfile.id} — Applicant: {originalProfile.name} — Held pending fairness review — {originalProfile.time}ms intercept latency — Source: {originalProfile.model} — Endpoint: api.equa.ai/intercept
           </span>
         </div>
 
@@ -174,22 +226,22 @@ export default function CounterfactualSimulator({ triggerToast }) {
             <div className="h-1 w-full bg-eq-blue absolute top-0 left-0" />
             <div className="p-4 border-b border-eq-border">
               <h3 className="font-plex text-sm text-eq-text font-medium mb-3">Original Profile</h3>
-              <div className="grid grid-cols-2 gap-y-2 gap-x-4">
-                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Name</span><span className="font-jet text-sm text-eq-text">James Smith</span></div>
-                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Age / Gender</span><span className="font-jet text-sm text-eq-text">34 | Male</span></div>
-                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Credit Score</span><span className="font-jet text-sm text-eq-text">720</span></div>
-                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Income</span><span className="font-jet text-sm text-eq-text">$85,000/yr</span></div>
-                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Zip Code</span><span className="font-jet text-sm text-eq-text">10001</span></div>
-                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Loan Amount</span><span className="font-jet text-sm text-eq-text">$45,000</span></div>
-                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Debt Ratio</span><span className="font-jet text-sm text-eq-text">28%</span></div>
-                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Employment</span><span className="font-jet text-sm text-eq-text">6 yrs</span></div>
+              <div className="grid grid-cols-[1.3fr_1fr] gap-y-2 gap-x-4">
+                <div className="flex flex-col min-w-0"><span className="font-sans text-[11px] text-eq-muted">Name</span><span className="font-jet text-sm text-eq-text truncate">{originalProfile.name}</span></div>
+                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Age / Gender</span><span className="font-jet text-sm text-eq-text">{originalProfile.age} | {originalProfile.gender}</span></div>
+                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Credit Score</span><span className="font-jet text-sm text-eq-text">{originalProfile.creditScore}</span></div>
+                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Income</span><span className="font-jet text-sm text-eq-text">${originalProfile.income.toLocaleString()}/yr</span></div>
+                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Zip Code</span><span className="font-jet text-sm text-eq-text">{originalProfile.zip}</span></div>
+                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">{originalProfile.type} Amount</span><span className="font-jet text-sm text-eq-text">$45,000</span></div>
+                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Debt Ratio</span><span className="font-jet text-sm text-eq-text">{originalProfile.debtRatio}%</span></div>
+                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Employment</span><span className="font-jet text-sm text-eq-text">{originalProfile.employment} yrs</span></div>
               </div>
             </div>
 
             <div className="p-4 flex flex-col gap-4 flex-1">
-              <div className="flex justify-between items-center bg-eq-pass-dim border border-eq-pass/40 px-4 py-3 rounded shadow-[0_0_12px_rgba(16,185,129,0.25)]">
-                <span className="font-plex text-lg font-semibold text-eq-pass">APPROVED</span>
-                <span className="font-sans text-xs text-eq-pass">Confidence: 91.4%</span>
+              <div className={`flex justify-between items-center px-4 py-3 rounded ${originalProfile.score > 80 ? 'bg-eq-pass-dim border border-eq-pass/40 shadow-[0_0_12px_rgba(16,185,129,0.25)]' : originalProfile.score >= 60 ? 'bg-eq-flag-dim border border-eq-flag/40' : 'bg-eq-block-dim border border-eq-block/40'}`}>
+                <span className={`font-plex text-lg font-semibold ${originalProfile.score > 80 ? 'text-eq-pass' : originalProfile.score >= 60 ? 'text-eq-flag' : 'text-eq-block'}`}>{originalProfile.score > 80 ? 'APPROVED' : originalProfile.score >= 60 ? 'FLAGGED' : 'DENIED'}</span>
+                <span className={`font-sans text-xs ${originalProfile.score > 80 ? 'text-eq-pass' : originalProfile.score >= 60 ? 'text-eq-flag' : 'text-eq-block'}`}>Confidence: {originalProfile.score}%</span>
               </div>
 
               <div>
@@ -231,22 +283,22 @@ export default function CounterfactualSimulator({ triggerToast }) {
                 <span className="font-plex text-[11px] text-eq-muted uppercase tracking-wider">Protected Attribute Swap</span>
               </div>
               <div className="flex gap-2">
-                <ToggleButton active={activeToggle==='Gender'} onClick={() => setActiveToggle('Gender')}>Gender: M ↔ F</ToggleButton>
+                <ToggleButton active={activeToggle==='Gender'} onClick={() => setActiveToggle('Gender')}>Gender: {originalProfile.gender === 'Male' ? 'M ↔ F' : 'F ↔ M'}</ToggleButton>
                 <ToggleButton active={activeToggle==='Race'} onClick={() => setActiveToggle('Race')}>Race: W ↔ B</ToggleButton>
-                <ToggleButton active={activeToggle==='Age'} onClick={() => setActiveToggle('Age')}>Age: 34 ↔ 58</ToggleButton>
+                <ToggleButton active={activeToggle==='Age'} onClick={() => setActiveToggle('Age')}>Age: {originalProfile.age} ↔ {originalProfile.age + 24}</ToggleButton>
               </div>
             </div>
 
             <div className="p-4 border-b border-eq-border">
-              <div className="grid grid-cols-2 gap-y-2 gap-x-4">
-                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Name</span><span className="font-jet text-sm text-eq-text bg-eq-block-dim px-1 rounded inline-block w-max transition-all">{currentData.name}</span></div>
-                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Age / Gender</span><span className="font-jet text-sm text-eq-text transition-all">{activeToggle==='Age'?'58':'34'} | {activeToggle==='Gender'?'Female':'Male'}</span></div>
-                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Credit Score</span><span className="font-jet text-sm text-eq-text">720</span></div>
-                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Income</span><span className="font-jet text-sm text-eq-text">$85,000/yr</span></div>
-                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Zip Code</span><span className="font-jet text-sm text-eq-text">10001</span></div>
-                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Loan Amount</span><span className="font-jet text-sm text-eq-text">$45,000</span></div>
-                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Debt Ratio</span><span className="font-jet text-sm text-eq-text">28%</span></div>
-                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Employment</span><span className="font-jet text-sm text-eq-text">6 yrs</span></div>
+              <div className="grid grid-cols-[1.3fr_1fr] gap-y-2 gap-x-4">
+                <div className="flex flex-col min-w-0"><span className="font-sans text-[11px] text-eq-muted">Name</span><span className="font-jet text-sm text-eq-text bg-eq-block-dim px-1 rounded inline-block w-fit truncate transition-all">{currentData.name}</span></div>
+                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Age / Gender</span><span className="font-jet text-sm text-eq-text transition-all">{activeToggle==='Age' ? (originalProfile.age + 24) : originalProfile.age} | {activeToggle==='Gender' ? (originalProfile.gender === 'Male' ? 'Female' : 'Male') : originalProfile.gender}</span></div>
+                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Credit Score</span><span className="font-jet text-sm text-eq-text">{originalProfile.creditScore}</span></div>
+                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Income</span><span className="font-jet text-sm text-eq-text">${originalProfile.income.toLocaleString()}/yr</span></div>
+                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Zip Code</span><span className="font-jet text-sm text-eq-text">{originalProfile.zip}</span></div>
+                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">{originalProfile.type} Amount</span><span className="font-jet text-sm text-eq-text">$45,000</span></div>
+                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Debt Ratio</span><span className="font-jet text-sm text-eq-text">{originalProfile.debtRatio}%</span></div>
+                <div className="flex flex-col"><span className="font-sans text-[11px] text-eq-muted">Employment</span><span className="font-jet text-sm text-eq-text">{originalProfile.employment} yrs</span></div>
               </div>
             </div>
 
@@ -324,12 +376,22 @@ export default function CounterfactualSimulator({ triggerToast }) {
           <div className="flex items-center gap-3">
             <ShieldCheck className="w-5 h-5 text-eq-muted" />
             <div className="flex flex-col font-plex text-[11px] text-eq-text gap-0.5">
-              <span>Certificate ID: #CERT-EQ-2026-04192-FLAGGED &nbsp;|&nbsp; Status: <span className="text-eq-flag">FLAGGED FOR REVIEW</span> &nbsp;|&nbsp; Hash: ...a3f9c2b1</span>
+              <span>Certificate ID: #CERT-{originalProfile.id.replace('#', '')}-FLAGGED &nbsp;|&nbsp; Applicant: {originalProfile.name} &nbsp;|&nbsp; Status: <span className="text-eq-flag">FLAGGED FOR REVIEW</span> &nbsp;|&nbsp; Hash: ...a3f9c2b1</span>
               <span className="text-eq-muted">Metrics checked: Demographic Parity | Equal Opportunity | Counterfactual Fairness &nbsp;|&nbsp; Threshold: ±10% &nbsp;|&nbsp; Result: FAIL</span>
-              <span className="text-eq-muted">Timestamp: 2026-04-20T14:32:07.483Z</span>
+              <span className="text-eq-muted">Timestamp: {new Date().toISOString()}</span>
             </div>
           </div>
-          <button className="font-sans text-[12px] text-eq-blue hover:text-blue-400 flex items-center gap-1">
+          <button
+            onClick={() => {
+              // Set the current profile as selectedDecision so Fairness Certificates shows it
+              setSelectedDecision({
+                ...originalProfile,
+                status: originalProfile.score > 80 ? 'PASS' : originalProfile.score >= 60 ? 'FLAG' : 'BLOCK',
+              });
+              setActiveScreen('Fairness Certificates');
+            }}
+            className="font-sans text-[12px] text-eq-blue hover:text-blue-400 flex items-center gap-1 transition-colors"
+          >
             View Full Certificate <ArrowRight className="w-3 h-3" />
           </button>
         </div>
