@@ -147,6 +147,77 @@ sequenceDiagram
 
 ---
 
+## 🔁 Process Flow Diagram
+
+The following flowchart illustrates the end-to-end decision process from the moment a user triggers an AI inference request to the final ALLOW/BLOCK outcome.
+
+```mermaid
+flowchart TD
+    START(["🧑‍💼 Compliance Officer<br/>Opens EQUA Dashboard"])
+    SELECT["Select Protected Attribute<br/>(Race / Gender / Age)"]
+    SEND["Frontend sends POST to<br/>/api/intercept on Cloud Run"]
+
+    subgraph PROXY["EQUA Express Proxy — Cloud Run"]
+        VALIDATE{"Validate<br/>Request Body"}
+        INVALID["Return 400<br/>Bad Request"]
+        BASELINE["Query Vertex AI<br/>Original Profile<br/>(⚠️ Simulated)"]
+        COUNTER["Query Vertex AI<br/>Counterfactual Profile<br/>(⚠️ Simulated)"]
+        CALC["Calculate Disparity<br/>Delta = Original − Counterfactual"]
+        CHECK{"Disparity Δ<br/>> ±10% Threshold?"}
+    end
+
+    subgraph BLOCK_FLOW["🔴 BLOCK Path"]
+        GEMINI["Send Disparity Data<br/>to Gemini API ✅"]
+        NARRATIVE["Gemini Returns<br/>Audit Narrative ✅"]
+        LOG["Log to Firebase RTDB<br/>via Admin SDK ✅"]
+        FCM["Trigger FCM Push<br/>Alert to Officer"]
+        BLOCK_RES["Return BLOCK Response<br/>+ Audit Report"]
+    end
+
+    subgraph ALLOW_FLOW["🟢 ALLOW Path"]
+        ALLOW_RES["Return ALLOW Response<br/>+ Original Score"]
+    end
+
+    DISPLAY_BLOCK["Dashboard Renders:<br/>• Typewriter Audit Narration<br/>• SHAP Feature Bars<br/>• Fairness Certificate"]
+    DISPLAY_ALLOW["Dashboard Renders:<br/>• Approved Decision<br/>• Fairness Score ≥ Threshold"]
+    
+    CERT["Certificate logged to<br/>Fairness Registry"]
+    RETRAIN["Flagged decision queued<br/>for Retraining Loop"]
+
+    START --> SELECT --> SEND --> VALIDATE
+    VALIDATE -- "Missing fields" --> INVALID
+    VALIDATE -- "Valid" --> BASELINE
+    BASELINE --> COUNTER --> CALC --> CHECK
+
+    CHECK -- "Yes — Bias Detected" --> GEMINI
+    GEMINI --> NARRATIVE --> LOG --> FCM --> BLOCK_RES
+    BLOCK_RES --> DISPLAY_BLOCK
+    DISPLAY_BLOCK --> CERT --> RETRAIN
+
+    CHECK -- "No — Fair Decision" --> ALLOW_RES
+    ALLOW_RES --> DISPLAY_ALLOW
+
+    style START fill:#1a1a2e,stroke:#3b82f6,color:#e2e8f0
+    style PROXY fill:#0f172a,stroke:#10b981,color:#e2e8f0
+    style BLOCK_FLOW fill:#1c1017,stroke:#ef4444,color:#e2e8f0
+    style ALLOW_FLOW fill:#0f1c17,stroke:#10b981,color:#e2e8f0
+    style CHECK fill:#1a1a2e,stroke:#f59e0b,color:#f59e0b
+    style GEMINI fill:#1a1a2e,stroke:#f59e0b,color:#e2e8f0
+    style LOG fill:#1a1a2e,stroke:#ef4444,color:#e2e8f0
+    style BASELINE fill:#2d2d3f,stroke:#f59e0b,color:#f59e0b,stroke-dasharray: 5 5
+    style COUNTER fill:#2d2d3f,stroke:#f59e0b,color:#f59e0b,stroke-dasharray: 5 5
+```
+
+**Process Flow Summary:**
+
+1. **User Action** — Compliance officer selects a protected attribute (Race, Gender, or Age) on the Counterfactual Simulator screen.
+2. **API Request** — Frontend sends a POST request to `/api/intercept` on the Cloud Run backend with applicant data and the selected attribute.
+3. **Validation** — The Express proxy validates required fields (`name`, `activeToggle`). Returns 400 if invalid.
+4. **Counterfactual Simulation** — The proxy queries the AI model twice: once with the original profile and once with the demographic attribute swapped. *(⚠️ Simulated in prototype with deterministic scores.)*
+5. **Disparity Detection** — The proxy calculates the delta between the two scores. If the delta exceeds the ±10% policy threshold, the decision is flagged.
+6. **BLOCK Path** — Gemini generates an audit narrative ✅, the decision is logged to Firebase RTDB ✅, an FCM alert is triggered, and the dashboard renders the full audit report with typewriter animation.
+7. **ALLOW Path** — If the disparity is within the threshold, the original decision is returned as fair and the dashboard renders the approved state.
+
 ## 🛡️ Security Posture
 
 ### Backend-to-Backend Orchestration

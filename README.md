@@ -134,7 +134,31 @@ sequenceDiagram
     end
 ```
 
-*(See our [ARCHITECTURE.md](./ARCHITECTURE.md) for a deep dive into the proxy logic and component diagrams).*
+*(See our [ARCHITECTURE.md](./ARCHITECTURE.md) for a deep dive into the proxy logic and component diagrams.)*
+
+---
+
+## 🔁 Process Flow
+
+```mermaid
+flowchart LR
+    A(["👤 User Selects<br/>Attribute"]) --> B["POST /api/intercept<br/>to Cloud Run"]
+    B --> C["Vertex AI: Baseline<br/>Score (⚠️ Simulated)"]
+    C --> D["Vertex AI: Counterfactual<br/>Score (⚠️ Simulated)"]
+    D --> E{"Disparity Δ<br/>> ±10%?"}
+    E -- "Yes" --> F["Gemini Audit ✅"]
+    F --> G["Firebase RTDB Log ✅"]
+    G --> H["🔴 BLOCK + Report"]
+    E -- "No" --> I["🟢 ALLOW Decision"]
+
+    style E fill:#1a1a2e,stroke:#f59e0b,color:#f59e0b
+    style H fill:#1c1017,stroke:#ef4444,color:#e2e8f0
+    style I fill:#0f1c17,stroke:#10b981,color:#e2e8f0
+    style C fill:#2d2d3f,stroke:#f59e0b,color:#f59e0b,stroke-dasharray: 5 5
+    style D fill:#2d2d3f,stroke:#f59e0b,color:#f59e0b,stroke-dasharray: 5 5
+```
+
+*(See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full process flow diagram with all decision nodes.)*
 
 ---
 
