@@ -26,31 +26,88 @@ Using **Counterfactual Identity Simulation**, EQUA instantly clones the user's p
 
 ---
 
+## ⚠️ Key Assumption: Vertex AI Simulation
+
+> **Important for judges:** The current prototype **simulates** the Vertex AI prediction endpoint using deterministic client-side scoring data. This design choice allows us to demonstrate the complete end-to-end interception lifecycle — counterfactual simulation, disparity detection, Gemini-powered audit narrative generation, and Firebase RTDB logging — without incurring Vertex AI inference costs during the hackathon.
+>
+> **What is LIVE:** Gemini 2.5 Flash Lite API calls (audit narratives) ✅ | Firebase RTDB writes (Fairness Registry) ✅ | Cloud Run deployment ✅ | Cloud Build CI/CD ✅
+>
+> **What is SIMULATED:** Vertex AI AutoML prediction scoring ⚠️ — The `@google-cloud/aiplatform` SDK is already included in the backend dependencies, and the Express proxy is architecturally ready for seamless Vertex AI endpoint integration. The simulation ensures a fully functional demo with zero ML inference cost.
+
+---
+
 ## 🧠 Powered by the Google Ecosystem
 
 EQUA heavily leverages Google Cloud and AI to deliver a production-grade firewall:
 
-- **Google Gemini API (`gemini-2.5-flash-lite`):** Acts as the real-time AI Fairness Auditor. Our Express backend securely orchestrates inference, constructing prompts with mathematical disparity deltas to generate human-readable compliance narratives.
-- **Google Cloud Run:** Hosts our containerized Express.js backend, providing auto-scaling, high availability, and a secure environment for our API keys.
-- **Firebase Realtime Database & Admin SDK:** Provides the persistence layer for the Fairness Registry. All blocked decisions are securely logged server-side via the Admin SDK for non-repudiable auditing.
-- **Google Cloud Build:** Automates our CI/CD pipeline, ensuring that every push to the repository is tested, containerized, and deployed to Cloud Run.
-- **Firebase Hosting:** Serves the optimized React frontend with global low-latency.
+- **Google Gemini API (`gemini-2.5-flash-lite`):** Acts as the real-time AI Fairness Auditor. Our Express backend securely orchestrates inference, constructing prompts with mathematical disparity deltas to generate human-readable compliance narratives. ✅ **LIVE**
+- **Google Cloud Run:** Hosts our containerized Express.js backend, providing auto-scaling, high availability, and a secure environment for our API keys. ✅ **LIVE**
+- **Firebase Realtime Database & Admin SDK:** Provides the persistence layer for the Fairness Registry. All blocked decisions are securely logged server-side via the Admin SDK for non-repudiable auditing. ✅ **LIVE**
+- **Google Cloud Build:** Automates our CI/CD pipeline, ensuring that every push to the repository is tested, containerized, and deployed to Cloud Run. ✅ **LIVE**
+- **Firebase Hosting:** Serves the optimized React frontend with global low-latency. ✅ **LIVE**
+- **Vertex AI AutoML (Simulated):** In the production architecture, Vertex AI hosts the target ML model being audited. The prototype simulates this endpoint to demonstrate the counterfactual interception flow at zero cost. ⚠️ **SIMULATED**
 
 *(See our [GOOGLE_SERVICES.md](./GOOGLE_SERVICES.md) for full technical details).*
 
 ---
 
-## 🏗️ System Architecture & Data Flow
+## 🏗️ System Architecture
 
 EQUA's architecture relies on a strict zero-trust approach to algorithmic inference, now fortified with a secure backend proxy.
+
+```mermaid
+graph TB
+    subgraph Client["Frontend Layer — Firebase Hosting"]
+        A["React 19 SPA<br/>(Vite + Tailwind v4)"]
+        A1["Counterfactual Simulator"]
+        A2["Bias Heatmap (SVG)"]
+        A3["Policy Engine"]
+        A4["Fairness Certificates"]
+    end
+
+    subgraph Backend["Backend Layer — Google Cloud Run"]
+        B["Express.js Proxy<br/>(Docker Container)"]
+        B1["Counterfactual<br/>Orchestrator"]
+        B2["Gemini Prompt<br/>Constructor"]
+        B3["Firebase Admin<br/>Writer"]
+        B --> B1 & B2 & B3
+    end
+
+    subgraph GoogleAI["Google AI Services"]
+        C["Gemini 2.5 Flash Lite<br/>AI Fairness Auditor ✅"]
+        D["Vertex AI AutoML<br/>(Simulated in Prototype ⚠️)"]
+    end
+
+    subgraph Persistence["Persistence — Firebase RTDB ✅"]
+        E["Fairness Registry<br/>(Decision Logs)"]
+    end
+
+    A1 -- "REST /api/intercept" --> B
+    B1 -- "Prediction Request<br/>(Original + Counterfactual)" --> D
+    B2 -- "Audit Prompt" --> C
+    B3 -- "Admin SDK Write" --> E
+    B -- "Audit Response" --> A1
+
+    style Client fill:#1a1a2e,stroke:#3b82f6,color:#e2e8f0
+    style Backend fill:#1a1a2e,stroke:#10b981,color:#e2e8f0
+    style GoogleAI fill:#1a1a2e,stroke:#f59e0b,color:#e2e8f0
+    style Persistence fill:#1a1a2e,stroke:#ef4444,color:#e2e8f0
+    style D fill:#2d2d3f,stroke:#f59e0b,color:#f59e0b,stroke-dasharray: 5 5
+```
+
+> **Diagram Legend:** Solid borders = LIVE services. Dashed border (Vertex AI AutoML) = Simulated in prototype.
+
+---
+
+## 🔄 Data Flow (Sequence Diagram)
 
 ```mermaid
 sequenceDiagram
     participant Client as React Frontend
     participant Proxy as EQUA Express Proxy (Cloud Run)
-    participant AI as Vertex AI Endpoint
-    participant Gemini as Gemini 2.5 API
-    participant RTDB as Firebase Realtime DB
+    participant AI as Vertex AI Endpoint (Simulated)
+    participant Gemini as Gemini 2.5 API ✅
+    participant RTDB as Firebase Realtime DB ✅
 
     Client->>Proxy: 1. Request AI Inference (User Data)
     Proxy->>AI: 2. Forward Initial Request
@@ -77,20 +134,20 @@ sequenceDiagram
     end
 ```
 
-*(See our [ARCHITECTURE.md](./ARCHITECTURE.md) for a deep dive into the proxy logic).*
+*(See our [ARCHITECTURE.md](./ARCHITECTURE.md) for a deep dive into the proxy logic and component diagrams).*
 
 ---
 
 ## ✨ Core Capabilities
 
 - **⚡ Real-Time Counterfactual Simulator**
-  Instantly swap protected demographic attributes (Gender, Race, Age) and watch the simulated model's decision shift. 
+  Instantly swap protected demographic attributes (Gender, Race, Age) and watch the simulated model's decision shift. Vertex AI prediction scoring is simulated with deterministic data; Gemini audit narratives are generated live.
 - **📜 Fairness Certificates (Firebase Integrated)**
   Blocked decisions are permanently logged into a real-time registry on Firebase, providing a production-grade audit trail.
 - **📊 Custom Bias Heatmap & Dashboard**
   Built with zero external charting libraries. All visualizations are high-performance raw SVGs with CSS keyframe micro-animations to ensure zero-latency rendering.
 - **🔄 Automated Retraining Loop**
-  Visualizes the pipeline for capturing data drift and automatically triggering a Vertex AI retraining job to fix the underlying model bias.
+  Visualizes the pipeline for capturing data drift and automatically triggering a Vertex AI retraining job to fix the underlying model bias. *(Pipeline is visualized; Vertex AI retraining is a planned future integration.)*
 - **⚙️ Policy Engine**
   Interactive sliders allow compliance officers to define strict "Action Thresholds" (e.g., blocking any decision with a >10% disparity delta).
 
@@ -100,6 +157,22 @@ sequenceDiagram
 EQUA was built specifically to address:
 - **Goal 10: Reduced Inequalities** - By actively preventing algorithmic discrimination in financial, medical, and hiring infrastructure, ensuring equal opportunity regardless of demographic background.
 - **Goal 16: Peace, Justice, and Strong Institutions** - By bringing transparency, accountability, and explainability to corporate AI systems, bridging the gap between abstract ML mathematics and practical enterprise compliance.
+
+---
+
+## 💰 Cost Estimation
+
+EQUA runs entirely on the **Google Cloud Free Tier** at prototype scale — **$0.00/month**. At production scale (10,000 decisions/day), the total cost is approximately **$9.00/month**, making AI fairness compliance accessible to any organization.
+
+*(See our detailed [ESTIMATED_COST.md](./ESTIMATED_COST.md) for a full cost breakdown by service.)*
+
+---
+
+## 🚀 Future Development
+
+EQUA's roadmap includes live Vertex AI AutoML endpoint integration, automated retraining pipelines via Vertex AI Pipelines + BigQuery, EU AI Act compliance report generation, multi-cloud AI model support, and official SDKs for Node.js, Python, and React.
+
+*(See our [FUTURE_DEVELOPMENT.md](./FUTURE_DEVELOPMENT.md) for the complete roadmap.)*
 
 ---
 
@@ -154,7 +227,18 @@ Building a production-grade AI Bias Firewall required overcoming massive UI late
 *(Read our full technical post-mortem in [CHALLENGES.md](./CHALLENGES.md)).*
 
 ---
+
+## 📚 Documentation Index
+
+| Document | Description |
+|---|---|
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | System architecture diagrams, component breakdown, security posture |
+| [GOOGLE_SERVICES.md](./GOOGLE_SERVICES.md) | Detailed Google Cloud & Firebase integration documentation |
+| [ESTIMATED_COST.md](./ESTIMATED_COST.md) | Cost estimation at prototype, production, and enterprise scale |
+| [FUTURE_DEVELOPMENT.md](./FUTURE_DEVELOPMENT.md) | Phase 1-3 development roadmap with technical details |
+| [CHALLENGES.md](./CHALLENGES.md) | Technical challenges and solutions during development |
+
+---
 <div align="center">
   <p><i>Building a fairer future, one inference at a time.</i></p>
 </div>
-

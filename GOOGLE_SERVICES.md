@@ -32,6 +32,12 @@ The EQUA React SPA (Single Page Application) is served via **Firebase Hosting**.
 ### How it is used:
 Firebase Hosting serves our optimized Vite production bundle over a global CDN. This ensures the dashboard loads instantly worldwide and provides automatic SSL provisioning for secure communication with the backend.
 
+## 6. Vertex AI AutoML (Simulated)
+In a production environment, EQUA intercepts decisions from live AI models hosted on Vertex AI.
+
+### How it is used:
+For the current prototype, we **simulate** the Vertex AI prediction endpoint using deterministic scoring logic. This allows us to demonstrate the full counterfactual interception workflow—including disparity detection and Gemini auditing—at zero cost while remaining architecturally compatible with a live Vertex AI integration.
+
 ---
 
 | Google Service | SDK/Package | Purpose |
@@ -42,4 +48,5 @@ Firebase Hosting serves our optimized Vite production bundle over a global CDN. 
 | **Firebase Admin SDK** | `firebase-admin` | Server-side authentication and database writes |
 | **Cloud Build** | `cloudbuild.yaml` | Automated CI/CD pipeline |
 | **Firebase Hosting** | `firebase-tools` | Global CDN for React frontend |
+| **Vertex AI AutoML** | `@google-cloud/aiplatform` | Target AI Model (Simulated in Prototype) |
 

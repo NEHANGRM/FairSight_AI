@@ -22,3 +22,6 @@ Building a production-grade AI Bias Firewall prototype for the Google Solution C
 **The Challenge:** Adopting the bleeding-edge Tailwind v4 required restructuring how we handled CSS imports, as it conflicts with traditional PostCSS setups if `@import` statements for fonts are not placed correctly.
 **The Solution:** We refactored `index.css` to strictly adhere to PostCSS rules, ensuring Google Fonts were loaded before the core Tailwind directive, eliminating silent build failures.
 
+## 6. Vertex AI Simulation Strategy
+**The Challenge:** Connecting to live Vertex AI AutoML endpoints for every demo run can be cost-prohibitive and requires extensive dataset preparation for a hackathon prototype.
+**The Solution:** We made a strategic decision to **simulate** the Vertex AI prediction scoring logic. By using deterministic baseline and counterfactual scores, we can showcase the entire EQUA firewall logic—including the sub-second Gemini AI audit and real-time Firebase logging—without the overhead of managing live ML endpoints. This ensures the prototype is 100% reliable for judges while maintaining a production-ready architecture.
