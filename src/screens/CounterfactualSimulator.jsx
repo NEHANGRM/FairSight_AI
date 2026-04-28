@@ -48,6 +48,7 @@ export default function CounterfactualSimulator({ triggerToast }) {
   useEffect(() => {
     let intervalId;
     let isMounted = true;
+    const abortController = new AbortController();
 
     const runGemini = async () => {
       setIsTyping(false);
@@ -59,6 +60,7 @@ export default function CounterfactualSimulator({ triggerToast }) {
         const response = await fetch('http://localhost:8080/api/intercept', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: abortController.signal,
           body: JSON.stringify({
             name: currentData.name,
             activeToggle: activeToggle,
@@ -78,9 +80,11 @@ export default function CounterfactualSimulator({ triggerToast }) {
         const fullText = result.narrative;
         setIsLoading(false);
         setIsTyping(true);
+        textRef.current = '';
         
         let i = 0;
         intervalId = setInterval(() => {
+          if (!isMounted) { clearInterval(intervalId); return; }
           textRef.current += fullText.charAt(i);
           setTypedText(textRef.current);
           i++;
@@ -91,18 +95,19 @@ export default function CounterfactualSimulator({ triggerToast }) {
         }, TYPEWRITER_SPEED);
 
       } catch (error) {
+        if (error.name === 'AbortError') return; // Ignore aborted requests
         console.error("Backend fetch error:", error);
         
-        // Artificial delay so the loader is visible even if the API fails instantly (e.g. 429 error or server down)
         await new Promise(r => setTimeout(r, 1500));
         
         if (isMounted) {
-          // Fallback to simulated text to ensure demo doesn't break
           setIsLoading(false);
           setIsTyping(true);
           const fallbackText = currentData.geminiText;
+          textRef.current = '';
           let i = 0;
           intervalId = setInterval(() => {
+            if (!isMounted) { clearInterval(intervalId); return; }
             textRef.current += fallbackText.charAt(i);
             setTypedText(textRef.current);
             i++;
@@ -119,6 +124,7 @@ export default function CounterfactualSimulator({ triggerToast }) {
 
     return () => {
       isMounted = false;
+      abortController.abort();
       if (intervalId) clearInterval(intervalId);
     };
   }, [activeToggle]);

@@ -54,8 +54,8 @@ app.post('/api/intercept', async (req, res) => {
 
     console.log(`[Intercept] Received decision for ${name}. Simulating Vertex AI SHAP extraction...`);
 
-    // 1. Call Gemini API for Audit Narrative
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+    // 1. Call Gemini API for Audit Narrative (with retry + fallback)
+    const models = ["gemini-2.5-flash-lite", "gemini-2.0-flash-lite"];
     const prompt = `You are the EQUA AI Fairness Auditor. An AI decision was intercepted and blocked.
 Applicant: ${name}
 Protected attribute swapped: ${activeToggle}
@@ -65,8 +65,30 @@ Decision Delta: ${delta || -32.4}
 
 Write a concise, highly professional 2-paragraph audit explanation (max 65 words) explaining why the model rejected them purely based on the correlation with the swapped protected attribute '${activeToggle}'. Start the second paragraph exactly with "Remediation suggestion:" and provide a technical ML fix (e.g., removing a proxy variable, adding constraints). Do not use markdown bolding.`;
 
-    const result = await model.generateContent(prompt);
-    const auditText = result.response.text();
+    let auditText = null;
+    for (const modelName of models) {
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          console.log(`[Gemini] Attempt ${attempt} with model: ${modelName}`);
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const result = await model.generateContent(prompt);
+          auditText = result.response.text();
+          console.log(`[Gemini] Success on attempt ${attempt} with ${modelName}`);
+          break;
+        } catch (geminiError) {
+          console.warn(`[Gemini] Attempt ${attempt} with ${modelName} failed:`, geminiError.message);
+          if (attempt < 3) {
+            const delay = 1000 * attempt; // 1s, 2s backoff
+            await new Promise(r => setTimeout(r, delay));
+          }
+        }
+      }
+      if (auditText) break;
+    }
+
+    if (!auditText) {
+      throw new Error("All Gemini model attempts failed after retries.");
+    }
 
     // 2. Firebase Admin SDK - Real RTDB Write
     const logEntry = {
