@@ -1,20 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ChevronDown, AlertCircle, Eye, AlertTriangle } from 'lucide-react';
 
-export default function DecisionFeed({ triggerToast, setActiveScreen }) {
+export default function DecisionFeed({ triggerToast, setActiveScreen, setSelectedDecision }) {
   const [decisions, setDecisions] = useState([
-    { id: '#EQ-2026-04198', name: 'Sarah K.', type: 'Hiring', model: 'HRModel-v3.1', status: 'PASS', score: 96.2, time: 143, isNew: false },
-    { id: '#EQ-2026-04197', name: 'Raj M.', type: 'Loan', model: 'LendAI-v2.3', status: 'PASS', score: 91.7, time: 201, isNew: false },
-    { id: '#EQ-2026-04196', name: 'Fatima A.', type: 'Medical', model: 'TriageBot-v1.8', status: 'FLAG', score: 62.4, time: 187, isNew: false },
-    { id: '#EQ-2026-04195', name: 'Chen W.', type: 'Hiring', model: 'HRModel-v3.1', status: 'PASS', score: 88.9, time: 156, isNew: false },
-    { id: '#EQ-2026-04194', name: 'Darnell W.', type: 'Loan', model: 'LendAI-v2.3', status: 'BLOCK', score: 41.2, time: 264, isNew: false },
-    { id: '#EQ-2026-04193', name: 'Priya S.', type: 'Medical', model: 'TriageBot-v1.8', status: 'PASS', score: 94.1, time: 168, isNew: false },
-    { id: '#EQ-2026-04192', name: 'James S.', type: 'Loan', model: 'LendAI-v2.3', status: 'FLAG', score: 61.8, time: 247, isNew: false },
+    { id: '#EQ-2026-04198', name: 'Sarah K.', type: 'Hiring', model: 'HRModel-v3.1', status: 'PASS', score: 96.2, time: 143, isNew: false, age: 28, gender: 'Female', creditScore: 745, income: 92000, zip: '94105', debtRatio: 22, employment: 4 },
+    { id: '#EQ-2026-04197', name: 'Raj M.', type: 'Loan', model: 'LendAI-v2.3', status: 'PASS', score: 91.7, time: 201, isNew: false, age: 41, gender: 'Male', creditScore: 780, income: 110000, zip: '10013', debtRatio: 18, employment: 12 },
+    { id: '#EQ-2026-04196', name: 'Fatima A.', type: 'Medical', model: 'TriageBot-v1.8', status: 'FLAG', score: 62.4, time: 187, isNew: false, age: 55, gender: 'Female', creditScore: 680, income: 58000, zip: '60614', debtRatio: 35, employment: 8 },
+    { id: '#EQ-2026-04195', name: 'Chen W.', type: 'Hiring', model: 'HRModel-v3.1', status: 'PASS', score: 88.9, time: 156, isNew: false, age: 32, gender: 'Male', creditScore: 710, income: 78000, zip: '98101', debtRatio: 25, employment: 5 },
+    { id: '#EQ-2026-04194', name: 'Darnell W.', type: 'Loan', model: 'LendAI-v2.3', status: 'BLOCK', score: 41.2, time: 264, isNew: false, age: 29, gender: 'Male', creditScore: 720, income: 85000, zip: '10001', debtRatio: 28, employment: 6 },
+    { id: '#EQ-2026-04193', name: 'Priya S.', type: 'Medical', model: 'TriageBot-v1.8', status: 'PASS', score: 94.1, time: 168, isNew: false, age: 37, gender: 'Female', creditScore: 760, income: 97000, zip: '30309', debtRatio: 20, employment: 9 },
+    { id: '#EQ-2026-04192', name: 'James S.', type: 'Loan', model: 'LendAI-v2.3', status: 'FLAG', score: 61.8, time: 247, isNew: false, age: 34, gender: 'Male', creditScore: 720, income: 85000, zip: '10001', debtRatio: 28, employment: 6 },
   ]);
 
   // Simulate new decisions
   useEffect(() => {
     let idCount = 4199;
+    const firstNames = ['Aisha', 'Marcus', 'Elena', 'Yusuf', 'Wei', 'Lucia', 'Omar', 'Neha', 'Trevor', 'Mei', 'Kwame', 'Sofia', 'Jamal', 'Ananya', 'Diego'];
+    const lastInits = ['K.', 'R.', 'L.', 'P.', 'S.', 'D.', 'A.', 'N.', 'T.', 'W.', 'B.', 'M.', 'J.', 'H.', 'G.'];
+    const genders = ['Male', 'Female'];
+    const zips = ['10001', '60614', '94105', '30309', '98101', '77001', '85001', '48201', '19103', '02101'];
+
     const timer = setInterval(() => {
       const types = ['Loan', 'Hiring', 'Medical'];
       const models = { 'Loan': 'LendAI-v2.3', 'Hiring': 'HRModel-v3.1', 'Medical': 'TriageBot-v1.8' };
@@ -23,16 +28,26 @@ export default function DecisionFeed({ triggerToast, setActiveScreen }) {
       let status = 'PASS';
       if (randScore < 45) status = 'BLOCK';
       else if (randScore < 65) status = 'FLAG';
+
+      const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+      const lastInit = lastInits[Math.floor(Math.random() * lastInits.length)];
       
       const newD = {
         id: `#EQ-2026-0${idCount++}`,
-        name: `User ${idCount % 100}`,
+        name: `${firstName} ${lastInit}`,
         type: selectedType,
         model: models[selectedType],
         status,
         score: parseFloat((randScore).toFixed(1)),
         time: Math.floor(Math.random() * 100) + 120,
-        isNew: true
+        isNew: true,
+        age: Math.floor(Math.random() * 35) + 22,
+        gender: genders[Math.floor(Math.random() * genders.length)],
+        creditScore: Math.floor(Math.random() * 200) + 600,
+        income: Math.floor(Math.random() * 100000) + 35000,
+        zip: zips[Math.floor(Math.random() * zips.length)],
+        debtRatio: Math.floor(Math.random() * 30) + 10,
+        employment: Math.floor(Math.random() * 15) + 1
       };
       
       if (status === 'BLOCK') {
@@ -125,9 +140,9 @@ export default function DecisionFeed({ triggerToast, setActiveScreen }) {
               <span className="font-jet text-[13px] text-eq-text">{d.time}ms</span>
               
               <div>
-                {d.status === 'PASS' && <ActionButton icon={Eye} label="View" type="neutral" onClick={() => setActiveScreen('Counterfactual Sim')} />}
-                {d.status === 'FLAG' && <ActionButton icon={AlertTriangle} label="Review ⚠" type="flag" onClick={() => setActiveScreen('Counterfactual Sim')} />}
-                {d.status === 'BLOCK' && <ActionButton icon={AlertCircle} label="Alert 🔴" type="block" onClick={() => setActiveScreen('Counterfactual Sim')} />}
+                {d.status === 'PASS' && <ActionButton icon={Eye} label="View" type="neutral" onClick={() => { setSelectedDecision(d); setActiveScreen('Counterfactual Sim'); }} />}
+                {d.status === 'FLAG' && <ActionButton icon={AlertTriangle} label="Review ⚠" type="flag" onClick={() => { setSelectedDecision(d); setActiveScreen('Fairness Certificates'); }} />}
+                {d.status === 'BLOCK' && <ActionButton icon={AlertCircle} label="Alert 🔴" type="block" onClick={() => { setSelectedDecision(d); setActiveScreen('Fairness Certificates'); }} />}
               </div>
             </div>
           ))}

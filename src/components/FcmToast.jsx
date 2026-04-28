@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ShieldAlert, ArrowRight } from 'lucide-react';
 
-export default function FcmToast({ message, onClose }) {
+export default function FcmToast({ message, onClose, setActiveScreen }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function FcmToast({ message, onClose }) {
             <span className="font-sans text-eq-muted text-[11px]">
               via Firebase Cloud Messaging | 0.3s ago
             </span>
-            <button className="flex items-center gap-1 text-eq-blue text-[11px] hover:text-blue-400 group">
+            <button onClick={() => { setActiveScreen('Decision Feed'); onClose(); }} className="flex items-center gap-1 text-eq-blue text-[11px] hover:text-blue-400 group">
               View Decision <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
