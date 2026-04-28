@@ -57,7 +57,8 @@ export default function CounterfactualSimulator({ triggerToast }) {
       textRef.current = '';
 
       try {
-        const response = await fetch('http://localhost:8080/api/intercept', {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+        const response = await fetch(`${apiUrl}/api/intercept`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           signal: abortController.signal,
