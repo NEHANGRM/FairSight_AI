@@ -66,6 +66,8 @@ Decision Delta: ${delta || -32.4}
 Write a concise, highly professional 2-paragraph audit explanation (max 65 words) explaining why the model rejected them purely based on the correlation with the swapped protected attribute '${activeToggle}'. Start the second paragraph exactly with "Remediation suggestion:" and provide a technical ML fix (e.g., removing a proxy variable, adding constraints). Do not use markdown bolding.`;
 
     let auditText = null;
+    let lastError = "Unknown error";
+    
     for (const modelName of models) {
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
@@ -76,9 +78,10 @@ Write a concise, highly professional 2-paragraph audit explanation (max 65 words
           console.log(`[Gemini] Success on attempt ${attempt} with ${modelName}`);
           break;
         } catch (geminiError) {
-          console.warn(`[Gemini] Attempt ${attempt} with ${modelName} failed:`, geminiError.message);
+          lastError = geminiError.message;
+          console.warn(`[Gemini] Attempt ${attempt} with ${modelName} failed:`, lastError);
           if (attempt < 3) {
-            const delay = 1000 * attempt; // 1s, 2s backoff
+            const delay = 1000 * attempt;
             await new Promise(r => setTimeout(r, delay));
           }
         }
@@ -87,7 +90,7 @@ Write a concise, highly professional 2-paragraph audit explanation (max 65 words
     }
 
     if (!auditText) {
-      throw new Error("All Gemini model attempts failed after retries.");
+      throw new Error(`Gemini failed. Last error: ${lastError}`);
     }
 
     // 2. Firebase Admin SDK - Real RTDB Write
