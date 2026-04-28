@@ -36,7 +36,7 @@ try {
 }
 
 // Initialize Gemini API
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY, { apiVersion: 'v1' });
 
 app.post('/api/intercept', async (req, res) => {
   try {
@@ -55,7 +55,7 @@ app.post('/api/intercept', async (req, res) => {
     console.log(`[Intercept] Received decision for ${name}. Simulating Vertex AI SHAP extraction...`);
 
     // 1. Call Gemini API for Audit Narrative (with retry + fallback)
-    const models = ["gemini-1.5-flash", "gemini-1.5-pro"];
+    const models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
     const prompt = `You are the EQUA AI Fairness Auditor. An AI decision was intercepted and blocked.
 Applicant: ${name}
 Protected attribute swapped: ${activeToggle}
