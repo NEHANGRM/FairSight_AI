@@ -43,9 +43,9 @@ export default function CounterfactualSimulator({ triggerToast, addNotification,
     employment: 6,
   };
 
-  // Values based on active toggle
-  const getDemoData = () => {
-    switch (activeToggle) {
+  // Values based on active toggle — accepts explicit toggle to avoid stale closures
+  const getDemoData = (toggle = activeToggle) => {
+    switch (toggle) {
       case 'Race':
         return {
           name: 'Darnell Washington',
@@ -75,6 +75,7 @@ export default function CounterfactualSimulator({ triggerToast, addNotification,
     }
   };
 
+
   const currentData = getDemoData();
 
   // Typewriter effect & API Call
@@ -82,6 +83,10 @@ export default function CounterfactualSimulator({ triggerToast, addNotification,
     let intervalId;
     let isMounted = true;
     const abortController = new AbortController();
+
+    // Snapshot current values at effect start to avoid stale closures
+    const snapshot = getDemoData(activeToggle);
+    const toggleSnapshot = activeToggle;
 
     const runGemini = async () => {
       setIsTyping(false);
@@ -96,11 +101,11 @@ export default function CounterfactualSimulator({ triggerToast, addNotification,
           headers: { 'Content-Type': 'application/json' },
           signal: abortController.signal,
           body: JSON.stringify({
-            name: currentData.name,
-            activeToggle: activeToggle,
+            name: snapshot.name,
+            activeToggle: toggleSnapshot,
             originalScore: 91.4,
-            counterfactualScore: currentData.fairnessScore,
-            delta: currentData.delta
+            counterfactualScore: snapshot.fairnessScore,
+            delta: snapshot.delta
           })
         });
 
@@ -114,11 +119,11 @@ export default function CounterfactualSimulator({ triggerToast, addNotification,
         // Push REAL notification — decision blocked via Gemini
         addNotification({
           type: 'blocked',
-          title: `Decision Blocked — ${currentData.name}`,
-          body: `${activeToggle} swap caused a ${currentData.delta}% score delta. Gemini audit narrative logged to Firebase RTDB.`,
+          title: `Decision Blocked — ${snapshot.name}`,
+          body: `${toggleSnapshot} swap caused a ${snapshot.delta}% score delta. Gemini audit narrative logged to Firebase RTDB.`,
         });
         
-        const fullText = result.narrative;
+        const fullText = result.narrative || snapshot.geminiText; // guard null
         setIsLoading(false);
         setIsTyping(true);
         textRef.current = '';
@@ -137,34 +142,26 @@ export default function CounterfactualSimulator({ triggerToast, addNotification,
 
       } catch (error) {
         if (error.name === 'AbortError') return; // Ignore aborted requests
-        console.error("Backend fetch error:", error);
+        console.warn("[EQUA] Gemini backend unavailable, using local fallback:", error.message);
 
-        // Push REAL notification — API failure
-        addNotification({
-          type: 'warning',
-          title: 'Gemini API Call Failed',
-          body: `Backend returned error for ${currentData.name}. Using fallback narrative. Error: ${error.message}`,
-        });
-        
-        await new Promise(r => setTimeout(r, 1500));
-        
-        if (isMounted) {
-          setIsLoading(false);
-          setIsTyping(true);
-          const fallbackText = currentData.geminiText;
-          textRef.current = '';
-          let i = 0;
-          intervalId = setInterval(() => {
-            if (!isMounted) { clearInterval(intervalId); return; }
-            textRef.current += fallbackText.charAt(i);
-            setTypedText(textRef.current);
-            i++;
-            if (i >= fallbackText.length) {
-              clearInterval(intervalId);
-              setIsTyping(false);
-            }
-          }, TYPEWRITER_SPEED);
-        }
+        if (!isMounted) return;
+
+        // Immediately use local fallback — no artificial delay
+        const fallbackText = snapshot.geminiText;
+        setIsLoading(false);
+        setIsTyping(true);
+        textRef.current = '';
+        let i = 0;
+        intervalId = setInterval(() => {
+          if (!isMounted) { clearInterval(intervalId); return; }
+          textRef.current += fallbackText.charAt(i);
+          setTypedText(textRef.current);
+          i++;
+          if (i >= fallbackText.length) {
+            clearInterval(intervalId);
+            setIsTyping(false);
+          }
+        }, TYPEWRITER_SPEED);
       }
     };
 
@@ -175,6 +172,7 @@ export default function CounterfactualSimulator({ triggerToast, addNotification,
       abortController.abort();
       if (intervalId) clearInterval(intervalId);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeToggle]);
 
   const handleDemoRun = () => {
