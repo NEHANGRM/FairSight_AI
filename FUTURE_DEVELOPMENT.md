@@ -114,32 +114,6 @@ EQUA v1.0 demonstrates the core interception concept with:
 - **Future:** Support batch auditing of historical decisions. Organizations can upload CSV/JSON files of past decisions, and EQUA runs the counterfactual simulation retroactively to identify previously undetected bias.
 - **Technical:** Use Cloud Functions + Cloud Storage triggers to process uploaded files, with results written to BigQuery for analysis and visualization.
 
----
-
-## Plain Text for PPT Slides
-
-### Slide: Future Development
-
-Phase 1 — Production ML Integration (Q3 2026):
-- Replace simulated scoring with live Vertex AI AutoML prediction endpoints
-- Integrate Vertex AI Explainable AI for real SHAP feature attributions
-- Add Vertex AI Model Monitoring for proactive drift detection
-
-Phase 2 — Enterprise Features (Q4 2026 — Q1 2027):
-- Multi-model auditing across loan, hiring, and healthcare AI systems
-- Automated retraining pipeline via Vertex AI Pipelines + BigQuery
-- Role-based access control with Firebase Authentication
-- Live FCM push notifications to compliance officers
-
-Phase 3 — Platform & Compliance (Q2 2027+):
-- EU AI Act compliance report generation using Gemini
-- Multi-cloud support for AWS SageMaker, Azure ML, and OpenAI
-- Fairness metric marketplace (6+ configurable metrics)
-- Official SDKs for Node.js, Python, and React
-- Offline batch auditing of historical decisions
-
----
-
 ## Technical Scalability Path
 
 | Metric | Prototype (Current) | Production (Phase 1) | Enterprise (Phase 3) |
