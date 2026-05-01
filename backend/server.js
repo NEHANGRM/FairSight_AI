@@ -23,16 +23,17 @@ if (!process.env.FIREBASE_SERVICE_ACCOUNT_KEY || !process.env.FIREBASE_DATABASE_
 }
 
 // Initialize Firebase Admin securely
+let firebaseEnabled = false;
 try {
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: process.env.FIREBASE_DATABASE_URL
   });
+  firebaseEnabled = true;
   console.log("Firebase Admin initialized securely.");
 } catch (error) {
-  console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY or initialize Firebase Admin:", error);
-  process.exit(1);
+  console.error("Warning: Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY or initialize Firebase Admin. Firebase logging will be disabled.", error.message);
 }
 
 // Initialize Gemini API
@@ -94,17 +95,21 @@ Write a concise, highly professional 2-paragraph audit explanation (max 65 words
     }
 
     // 2. Firebase Admin SDK - Real RTDB Write
-    const logEntry = {
-      applicant: name,
-      attribute: activeToggle,
-      delta: delta,
-      status: "BLOCKED",
-      timestamp: new Date().toISOString(),
-      auditNarrative: auditText
-    };
+    if (firebaseEnabled) {
+      const logEntry = {
+        applicant: name,
+        attribute: activeToggle,
+        delta: delta,
+        status: "BLOCKED",
+        timestamp: new Date().toISOString(),
+        auditNarrative: auditText
+      };
 
-    await admin.database().ref('decisionLogs').push(logEntry);
-    console.log("[Firebase] Real decision log written to RTDB for:", logEntry.applicant);
+      await admin.database().ref('decisionLogs').push(logEntry);
+      console.log("[Firebase] Real decision log written to RTDB for:", logEntry.applicant);
+    } else {
+      console.log("[Firebase] Skipped RTDB write because Firebase is not initialized.");
+    }
 
     // 3. Firebase Admin SDK - FCM Push Alert
     // Assuming FCM tokens are stored somewhere or sent to a topic

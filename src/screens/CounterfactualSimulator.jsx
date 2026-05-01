@@ -77,6 +77,7 @@ export default function CounterfactualSimulator({ triggerToast, addNotification,
 
 
   const currentData = getDemoData();
+  console.log("Rendering Counterfactual Simulator! Toggle:", activeToggle);
 
   // Typewriter effect & API Call
   useEffect(() => {
@@ -328,12 +329,12 @@ export default function CounterfactualSimulator({ triggerToast, addNotification,
         </div>
 
         {/* Gemini Narration */}
-        <div className="mx-6 mt-6 bg-eq-panel border-l-[3px] border-l-eq-gemini rounded-r overflow-hidden relative">
+        <div className="mx-6 mt-6 bg-eq-panel border-l-[3px] border-l-eq-gemini rounded-r relative shadow-lg">
           <div className="p-4">
             <div className="flex justify-between items-center mb-3">
               <div className="flex flex-col">
                 <h4 className="font-plex text-[13px] text-eq-muted">Gemini Audit Narration</h4>
-                <span className="font-sans text-[10px] text-eq-hint mt-0.5">Generated 0.3s ago — Decision #EQ-2026-04192</span>
+                <span className="font-sans text-[10px] text-eq-hint mt-0.5">Generated just now — Decision #EQ-2026-04192</span>
               </div>
               <div className="flex items-center gap-1.5 text-eq-gemini bg-eq-gemini-dim px-2 py-1 rounded">
                 <Sparkles className="w-3.5 h-3.5" />
